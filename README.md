@@ -24,3 +24,17 @@ A high-frequency trading (HFT) automation robot designed for the Bybit exchange.
 4. Double-click `run_terminal.bat`. 
 
 *Note: The launcher will automatically build the `hft_env` virtual environment, upgrade pip, install all mandatory libraries (`PyQt6`, `pybit`, `websockets`, `qasync`, `aiohttp`), and securely start the terminal.*
+## Support & Referral Program
+
+If you find this HFT concept useful or want to support further architecture development, you can support the project in two ways:
+
+### 1. Bybit Referral Program
+If you don't have a Bybit account yet, you can support the architect by using the official referral code during registration. This helps fund the design of future trading modules:
+* **Referral Code:** `0Y4917O`
+
+### 2. Micro-Donations
+Even a 0.5 USDT contribution helps keep the project active and covers infrastructure testing costs.
+
+* **USDT (Arbitrum One):** `0x7613ea13d249d08519e16d4e6972972661643c81`
+
+*Thank you for supporting independent software design and crypto automation!*
