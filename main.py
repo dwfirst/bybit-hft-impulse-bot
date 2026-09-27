@@ -86,8 +86,8 @@ class ImpulseCatcherOrchestrator:
         if status == "TRIGGERED":
             change = tick_data.get("change_pct", 0)
             self._log(
-                f"\n[⚡ ИМПУЛЬС] {coin} +{change:.2f}% — "
-                f"ожидание отката {self.config['sliders']['slider_4_rebound_entry_trigger_pct']}%"
+                f"\n[⚡IMPULSE] {coin} +{change:.2f}% — "
+                f"waiting for a rollback {self.config['sliders']['slider_4_rebound_entry_trigger_pct']}%"
             )
             await self.popup.trigger_visual_and_audio_alert(coin, price)
             return
