@@ -75,7 +75,7 @@ Three isolated async layers communicating through shared state and callbacks:
 
 ```
 ┌──────────────────────┐   ┌──────────────────────┐   ┌──────────────────────┐
-│        ENGINE        │──▶│       TRADING        │──▶│          UI          │
+│        ENGINE        │── │       TRADING        │── │          UI          │
 │  ticks, momentum,    │   │  orders, positions,  │   │  PyQt6, sliders,     │
 │  direction, RiskGuard│   │  trailing, PnL       │   │  popup, Kill Switch  │
 └──────────────────────┘   └──────────────────────┘   └──────────────────────┘
@@ -120,7 +120,7 @@ ImpulseCatcherV5/
 
 ---
 
-## 🎛 Config
+##  Config
 
 Copy `config.example.json` to `config.json` and fill in:
 
@@ -133,7 +133,7 @@ Copy `config.example.json` to `config.json` and fill in:
 
 ---
 
-## 🚀 Quick start
+##  Quick start
 
 ### Requirements
 
@@ -181,7 +181,7 @@ On startup the bot:
 
 ---
 
-## 📋 Roadmap
+##  Roadmap
 
 - [x] Async engine (asyncio + pybit V5 + qasync + PyQt6)
 - [x] Tick-based momentum detection with UP/DOWN direction
