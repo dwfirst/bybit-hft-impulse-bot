@@ -1,0 +1,5 @@
+pybit
+PyQt6
+websockets
+qasync
+aiohttp
