@@ -1,0 +1,45 @@
+{
+  "api": {
+    "testnet": false,
+    "api_key": "",
+    "api_secret": "",
+    "recv_window_default": 5000,
+    "domain": "bybit"
+  },
+  "assets": {
+    "monitored_coins": ["BTC", "ETH", "SOL", "XRP"],
+    "quota_per_asset_percent": 25.0
+  },
+  "sliders": {
+    "slider_1_momentum_threshold_pct": 2.5,
+    "slider_2_panic_window_sec": 15,
+    "slider_3_liquidation_volume_threshold_usdt": 20000,
+    "slider_4_rebound_entry_trigger_pct": 0.3,
+    "slider_5_trend_exhaustion_limit_1m_candles": 5,
+    "slider_6_fixed_margin_per_trade_usdt": 1.5,
+    "slider_7_leverage_multiplier": 10,
+    "slider_8_trailing_activation_pct": 0.5,
+    "slider_9_instability_rollback_exit_pct": 0.1
+  },
+  "risk_management": {
+    "atr_stop_multiplier": 1.5,
+    "daily_max_loss_pct": 5.0,
+    "max_consecutive_losses": 3,
+    "lockout_duration_hours": 4
+  },
+  "hft_protections": {
+    "api_throttle_ms": 300,
+    "websocket_ping_interval_sec": 20,
+    "websocket_ping_timeout_sec": 10,
+    "liquidation_max_delay_ms": 500
+  },
+  "advanced_features": {
+    "twin_order_enabled": true,
+    "twin_order_split": {
+      "first_entry_market_pct": 40,
+      "second_limit_distance_pct": 1.0,
+      "second_limit_volume_pct": 60
+    },
+    "kill_switch_hotkey": "F12"
+  }
+}
