@@ -43,7 +43,7 @@ class ImpulseCatcherOrchestrator:
 
         self.time_sync = TimeSynchronizer(domain=domain)
         self.hft_processor = HFTProcessor(self.config)
-        self.client_init = BybitClientInitializer(self.config)
+        self.client_init = BybitClientInitializer(self.config, time_sync=self.time_sync)
         self.order_manager = TwinOrderExecutor(self.config, self.client_init, self._log)
         self.risk_guard = RiskGuard(self.config, self._log)
         self.position_tracker = PositionTracker(self.config, self.order_manager, self._log)
