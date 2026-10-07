@@ -7,3 +7,4 @@ config.json
 *.pyc
 .env
 secrets.json
+risk_guard_state.json
