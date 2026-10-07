@@ -1,5 +1,7 @@
 import asyncio
 import math
+import time
+import uuid
 
 
 class TwinOrderExecutor:
@@ -17,11 +19,32 @@ class TwinOrderExecutor:
             "BTC": {"leverage": 20, "step": 0.001},
         }
 
+    # ---------- Helpers ----------
+
     def _round_to_step(self, value: float, step: float) -> float:
         if step <= 0:
             return value
         decimals = len(str(step).split(".")[1]) if "." in str(step) else 0
         return round(math.floor(value / step) * step, decimals)
+
+    @staticmethod
+    def _make_order_link_id(coin: str, tag: str) -> str:
+        """Генерит уникальный orderLinkId.
+
+        Bybit ограничения: до 36 символов, только A-Z a-z 0-9 _ -
+        """
+        ts = int(time.time() * 1000) % 10_000_000_000  # 10 цифр
+        rnd = uuid.uuid4().hex[:6]
+        link = f"IC-{coin}-{tag}-{ts}-{rnd}"[:36]
+        return link
+
+    async def _rest(self, func, *args, **kwargs):
+        """Прокси через throttled_call, если он есть, иначе — asyncio.to_thread."""
+        if hasattr(self.client_init, "throttled_call"):
+            return await self.client_init.throttled_call(func, *args, **kwargs)
+        return await asyncio.to_thread(func, *args, **kwargs)
+
+    # ---------- Entry ----------
 
     async def execute_twin_entry(
         self, coin: str, trigger_price: float, direction: str = "UP"
@@ -60,9 +83,12 @@ class TwinOrderExecutor:
             exit_side = "Sell"
             hard_stop = round(ins_price * 0.985, 2)
 
+        market_link = self._make_order_link_id(coin, "MKT")
+        limit_link = self._make_order_link_id(coin, "LMT")
+
         try:
             try:
-                await asyncio.to_thread(
+                await self._rest(
                     session.set_leverage,
                     category="linear",
                     symbol=symbol,
@@ -72,7 +98,7 @@ class TwinOrderExecutor:
             except Exception:
                 pass
 
-            market_res = await asyncio.to_thread(
+            market_res = await self._rest(
                 session.place_order,
                 category="linear",
                 symbol=symbol,
@@ -80,16 +106,18 @@ class TwinOrderExecutor:
                 orderType="Market",
                 qty=str(qty_market),
                 positionIdx=0,
+                orderLinkId=market_link,
             )
             direction_label = "Short" if is_short else "Long"
             self.log(
-                f"[API] Market {direction_label} {coin} (Leverage: {leverage}x): qty={qty_market}"
+                f"[API] Market {direction_label} {coin} (Leverage: {leverage}x): "
+                f"qty={qty_market}, linkId={market_link}"
             )
 
             await asyncio.sleep(0.25)
             real_entry_price = trigger_price
             try:
-                pos_resp = await asyncio.to_thread(
+                pos_resp = await self._rest(
                     session.get_positions,
                     category="linear",
                     symbol=symbol,
@@ -104,7 +132,7 @@ class TwinOrderExecutor:
                     f"[API WARNING] Could not fetch avg entry: {pos_err}. Using trigger price."
                 )
 
-            limit_res = await asyncio.to_thread(
+            limit_res = await self._rest(
                 session.place_order,
                 category="linear",
                 symbol=symbol,
@@ -113,13 +141,15 @@ class TwinOrderExecutor:
                 qty=str(qty_limit),
                 price=str(ins_price),
                 positionIdx=0,
+                orderLinkId=limit_link,
             )
             self.log(
-                f"[API] Limit Insurance {coin} @ {ins_price}, qty={qty_limit}, side={entry_side}"
+                f"[API] Limit Insurance {coin} @ {ins_price}, qty={qty_limit}, "
+                f"side={entry_side}, linkId={limit_link}"
             )
 
             try:
-                await asyncio.to_thread(
+                await self._rest(
                     session.set_trading_stop,
                     category="linear",
                     symbol=symbol,
@@ -139,7 +169,9 @@ class TwinOrderExecutor:
                 "direction": direction,
                 "exit_side": exit_side,
                 "market_order_id": market_res["result"]["orderId"],
+                "market_order_link_id": market_link,
                 "limit_order_id": limit_res["result"]["orderId"],
+                "limit_order_link_id": limit_link,
                 "average_entry_price": real_entry_price,
                 "server_stop_loss": hard_stop,
                 "is_insurance_filled": False,
@@ -148,10 +180,13 @@ class TwinOrderExecutor:
             self.log(f"[API ERROR] Critical order failure for {coin}: {exc}")
             return {"status": "FAILED", "coin": coin, "error": str(exc)}
 
+    # ---------- Exit ----------
+
     async def close_market_position(self, symbol: str, direction: str = "UP") -> bool:
         session = self.client_init.get_rest_session()
+        close_link = self._make_order_link_id(symbol.replace("USDT", ""), "CLS")
         try:
-            positions = await asyncio.to_thread(
+            positions = await self._rest(
                 session.get_positions,
                 category="linear",
                 symbol=symbol,
@@ -177,7 +212,7 @@ class TwinOrderExecutor:
             else:
                 close_side = "Buy" if direction == "UP" else "Sell"
 
-            await asyncio.to_thread(
+            await self._rest(
                 session.place_order,
                 category="linear",
                 symbol=symbol,
@@ -186,19 +221,23 @@ class TwinOrderExecutor:
                 qty=str(size),
                 positionIdx=0,
                 reduceOnly=True,
+                orderLinkId=close_link,
             )
             self.log(
-                f"[API] Position {symbol} closed via Market, qty={size}, side={close_side}"
+                f"[API] Position {symbol} closed via Market, qty={size}, "
+                f"side={close_side}, linkId={close_link}"
             )
             return True
         except Exception as exc:
             self.log(f"[API ERROR] Closing {symbol} failed: {exc}")
             return False
 
+    # ---------- Emergency ----------
+
     async def cancel_all_orders_for_safety(self):
         session = self.client_init.get_rest_session()
         try:
-            await asyncio.to_thread(
+            await self._rest(
                 session.cancel_all_orders,
                 category="linear",
                 settleCoin="USDT",
