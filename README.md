@@ -50,6 +50,10 @@ It consumes tick-by-tick `publicTrade` events, detects momentum acceleration, an
 - **Real avgPrice** — read from the exchange after entry, used by the tracker for accurate trailing.
 - **Trailing exit** — driven by instability rollback (percentage-based; ATR-normalization planned).
 - **Kill Switch (F12)** — cancels all orders and closes all positions.
+- **RiskGuard persistence** — atomic JSON state file survives restarts; day-rollover safe.
+- **REST throttling** — global `RateLimiter` in `client_init` (default 120 ms).
+- **Dynamic `recvWindow`** — resolved from `TimeSynchronizer.get_recv_window()` with config fallback.
+- **`orderLinkId` on all orders** — Market / Limit / Close; returned in `order_report` for future reconciliation.
 
 ## 🚧 What's NOT implemented yet
 
@@ -58,14 +62,10 @@ It consumes tick-by-tick `publicTrade` events, detects momentum acceleration, an
 - ATR-based dynamic stop — currently fixed 1.5% in `order_manager`.
 - ATR-normalized trailing exit — currently percentage-based.
 - True **Chase Limit** re-posting — currently Market scout + static Limit add.
-- Real-time API throttle (`api_throttle_ms`) — not wired to REST calls.
 - Space / Escape hotkeys and a modal popup — `F12` works only when the window has focus.
-- Dynamic `recvWindow` — `time_sync.get_recv_window` exists but is not connected to `client_init`.
 - Instruments-info rounding — no `instruments-info` fetch; `_round_to_step` is an approximation.
-- Persistence of RiskGuard state across restarts — counters live in memory only.
 - Funding-rate blackout (30 s before / 15 s after settlement) — not implemented.
 - Periodic position existence check (`get_positions`) — tracker assumes the position is alive until exit.
-- `orderLinkId` on outgoing orders — not set.
 
 ---
 
@@ -193,11 +193,11 @@ On startup the bot:
 - [ ] Anti-FOMO filter (1m candle counter)
 - [ ] ATR-based stop and trailing exit
 - [ ] True Chase Limit re-posting
-- [ ] API throttle + rate-limit backoff
+- [x] API throttle + rate-limit backoff
 - [ ] Instruments-info rounding for Price/Qty
 - [ ] Space / Escape hotkeys + modal popup
-- [ ] Dynamic `recvWindow` wired into `client_init`
-- [ ] RiskGuard state persistence (JSON/SQLite)
+- [x] Dynamic `recvWindow` wired into `client_init`
+- [x] RiskGuard state persistence (JSON/SQLite)
 - [ ] Funding-rate blackout window
 - [ ] 48h Bybit Testnet run
 
@@ -221,11 +221,10 @@ These are documented on purpose. A serious trading tool is defined by what it ho
 
 1. **No live PnL is published.** All thresholds are design targets.
 2. **`liquidation` stream is not connected.** Panic detection is currently volume-spike based on `publicTrade` only.
-3. **RiskGuard is not persisted.** Restarting the bot resets daily counters.
-4. **ATR is not computed.** The hard stop is a fixed 1.5%.
-5. **Chase Limit is partial.** It is a static Limit add, not a re-posting chase.
-6. **Kill Switch is client-side only.** No server-side dead-man's switch.
-7. **`average_2h_volume` in `hft_processor` is hardcoded** — the volume-climax filter is not fully active.
+3. **ATR is not computed.** The hard stop is a fixed 1.5%.
+4. **Chase Limit is partial.** It is a static Limit add, not a re-posting chase.
+5. **Kill Switch is client-side only.** No server-side dead-man's switch.
+6. **`average_2h_volume` in `hft_processor` is hardcoded** — the volume-climax filter is not fully active.
 
 ---
 
