@@ -120,3 +120,19 @@ MIT, `Copyright (c) 2026 dwfirst`.
 - Секреты (`config.json`, `.env`, ключи) — **никогда** в git.
 - После правки — `Ctrl+K S` (Save All) в Cursor перед `python main.py`.
 - Логи на английском, сообщения пользователю могут быть русскими, но теги — только `[UPPERCASE]` на латинице.
+## 2026-10-07 — Hardening pass (Steps 1-2)
+
+### Step 1: RiskGuard persistence
+- Atomic JSON state file (`risk_guard_state.json`) with `os.replace`
+- Auto-skip restore if state file is from a previous day
+- `.gitignore` cleanup (state file no longer tracked)
+- Tested: save/restore, day-rollover safety
+
+### Step 2: API reliability
+- `RateLimiter` class in `client_init.py` — global REST throttle (default 120ms)
+- `throttled_call()` helper on `BybitClientInitializer`
+- Dynamic `recvWindow` resolved from `TimeSynchronizer.get_recv_window()`
+- `main.py` now passes `time_sync` into the client initializer
+- `orderLinkId` added to every `place_order` (Market / Limit / Close)
+- `orderLinkId` returned in `order_report` for future tracker reconciliation
+- Tested: import smoke, recvWindow resolution, rate-limiter timing
