@@ -1,4 +1,4 @@
-import datetime
+﻿import datetime
 import json
 import os
 from pathlib import Path
@@ -116,6 +116,21 @@ class RiskGuard:
         self._save_state()
         return True
 
+    def is_funding_blackout(self, before_sec: int = 30, after_sec: int = 15) -> bool:
+        """True, если сейчас окно запрета вокруг расчёта фандинга."""
+        now = datetime.datetime.now(datetime.timezone.utc)
+        for h in (0, 8, 16):
+            ft = now.replace(hour=h, minute=0, second=0, microsecond=0)
+            delta = (now - ft).total_seconds()
+            if -before_sec <= delta <= after_sec:
+                return True
+        return False
+
     def can_trade(self) -> bool:
         self.check_new_day()
-        return not self.is_locked_out
+        if self.is_locked_out:
+            return False
+        if self.is_funding_blackout():
+            self.log("[RISK GUARD] Funding blackout window - trading paused.")
+            return False
+        return True
