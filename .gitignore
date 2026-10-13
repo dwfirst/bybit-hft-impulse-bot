@@ -1,10 +1,17 @@
+# Virtual environments
 hft_env/
 .venv/
 venv/
+
+# Secrets and configs
 config.json
+secrets.json
+.env
+
+# Logs and state
 *.log
+risk_guard_state.json
+
+# Python
 **/__pycache__/
 *.pyc
-.env
-secrets.json
-risk_guard_state.json
