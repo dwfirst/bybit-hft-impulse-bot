@@ -39,10 +39,8 @@ class TwinOrderExecutor:
         return link
 
     async def _rest(self, func, *args, **kwargs):
-        """Прокси через throttled_call, если он есть, иначе — asyncio.to_thread."""
-        if hasattr(self.client_init, "throttled_call"):
-            return await self.client_init.throttled_call(func, *args, **kwargs)
-        return await asyncio.to_thread(func, *args, **kwargs)
+        """Прокси через throttled_call."""
+        return await self.client_init.throttled_call(func, *args, **kwargs)
 
     # ---------- Entry ----------
 
