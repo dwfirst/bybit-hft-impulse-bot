@@ -114,6 +114,20 @@ class TwinOrderExecutor:
                 f"qty={qty_market}, linkId={market_link}"
             )
 
+            # === AMR: Auto-Add Margin для защиты от ликвидации ===
+            try:
+                await self._rest(
+                    session.set_auto_add_margin,
+                    category="linear",
+                    symbol=symbol,
+                    autoAddMargin=1,
+                    positionIdx=0,
+                )
+                self.log(f"[API SAFETY] AMR enabled for {coin}")
+            except Exception as amr_err:
+                self.log(f"[API WARNING] Failed to enable AMR: {amr_err}")
+            # === /AMR ===
+
             await asyncio.sleep(0.25)
             real_entry_price = trigger_price
             try:
@@ -147,6 +161,36 @@ class TwinOrderExecutor:
                 f"[API] Limit Insurance {coin} @ {ins_price}, qty={qty_limit}, "
                 f"side={entry_side}, linkId={limit_link}"
             )
+
+            # === LIQ SAFETY: проверка liqPrice перед SL ===
+            try:
+                pos_resp = await self._rest(
+                    session.get_positions,
+                    category="linear",
+                    symbol=symbol,
+                )
+                for pos in pos_resp.get("result", {}).get("list", []):
+                    if abs(float(pos.get("size", 0))) > 0:
+                        liq_price = float(pos.get("liqPrice", 0) or 0)
+                        if liq_price > 0:
+                            if is_short and liq_price <= hard_stop:
+                                self.log(
+                                    f"[LIQ SAFETY] Liq {liq_price} <= SL {hard_stop}. "
+                                    f"Closing {coin} to avoid liquidation."
+                                )
+                                await self.close_market_position(symbol, direction)
+                                return {"status": "FAILED", "coin": coin, "error": "SL beyond liquidation"}
+                            if not is_short and liq_price >= hard_stop:
+                                self.log(
+                                    f"[LIQ SAFETY] Liq {liq_price} >= SL {hard_stop}. "
+                                    f"Closing {coin} to avoid liquidation."
+                                )
+                                await self.close_market_position(symbol, direction)
+                                return {"status": "FAILED", "coin": coin, "error": "SL beyond liquidation"}
+                        break
+            except Exception as liq_err:
+                self.log(f"[API WARNING] Liq check failed: {liq_err}")
+            # === /LIQ SAFETY ===
 
             try:
                 await self._rest(
