@@ -31,6 +31,30 @@ class PositionTracker:
         )
         await self._tracking_task
 
+    async def _check_position_alive(self, symbol: str) -> bool | None:
+        """Проверяет, жива ли позиция на бирже.
+
+        Возвращает:
+          - True  — позиция есть, size > 0
+          - False — позиции нет (закрыта на бирже)
+          - None  — не смогли проверить (ошибка сети / API) — не считаем это закрытием
+        """
+        try:
+            session = self.order_manager.client_init.get_rest_session()
+            resp = await self.order_manager._rest(
+                session.get_positions,
+                category="linear",
+                symbol=symbol,
+            )
+            positions = resp.get("result", {}).get("list", [])
+            for pos in positions:
+                if abs(float(pos.get("size", 0))) > 0:
+                    return True
+            return False
+        except Exception as e:
+            self.log(f"[TRACKER WARNING] _check_position_alive failed: {e}")
+            return None
+
     def _report_pnl_to_risk_guard(self, pnl_pct: float, entry_price: float, exit_price: float):
         if self.risk_guard is None:
             return
@@ -70,9 +94,28 @@ class PositionTracker:
             f"[TRACKER] Tracking active for {coin} ({direction}), entry @ {avg_entry}"
         )
 
+        last_position_check = 0.0
+        POSITION_CHECK_INTERVAL = 5.0  # секунд
+
         try:
             while self.current_position:
                 await asyncio.sleep(0.05)
+
+                now = asyncio.get_event_loop().time()
+
+                # Периодическая проверка: жива ли позиция на бирже?
+                if now - last_position_check >= POSITION_CHECK_INTERVAL:
+                    last_position_check = now
+                    alive = await self._check_position_alive(symbol)
+                    if alive is False:
+                        self.log(
+                            f"[TRACKER] Position {symbol} closed externally "
+                            f"(liquidation / server SL / manual). Reporting PnL=0."
+                        )
+                        # PnL unknown at this point - report 0, RiskGuard will count as neutral
+                        self._report_pnl_to_risk_guard(0.0, avg_entry, avg_entry)
+                        hft_processor.reset_coin(coin)
+                        break
 
                 current_price = hft_processor.get_latest_price(coin)
                 if current_price is None:
