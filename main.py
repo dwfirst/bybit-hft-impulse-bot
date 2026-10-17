@@ -74,6 +74,8 @@ class ImpulseCatcherOrchestrator:
     async def run_network_layers(self):
         self._log("[SYSTEM] time sync with bybit...")
         await self.time_sync.sync_with_bybit()
+        self._log("[SYSTEM] warmup instruments-info...")
+        await self.order_manager.warmup_instruments()
         self._log("[SYSTEM] start websocket stream...")
         await self.ws_connector.start_streaming(self._handle_tick)
 
