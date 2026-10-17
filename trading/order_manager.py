@@ -46,7 +46,11 @@ class TwinOrderExecutor:
 
     async def warmup_instruments(self) -> None:
         """Loads qtyStep/tickSize for all coin_settings from Bybit instruments-info."""
-        session = self.client_init.get_rest_session()
+        try:
+            session = self.client_init.get_rest_session()
+        except ValueError as e:
+            self.log(f"[INSTR WARNING] REST session unavailable: {e}. Using hardcoded step.")
+            return
         for coin in self.coin_settings:
             symbol = f"{coin}USDT"
             try:
