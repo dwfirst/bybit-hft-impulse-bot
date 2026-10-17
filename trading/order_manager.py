@@ -12,6 +12,11 @@ class TwinOrderExecutor:
         self.sliders = config["sliders"]
         self.twin_config = config["advanced_features"]["twin_order_split"]
 
+        # --- Entry guard (P3: dedup) ---
+        self._entry_locks: dict[str, asyncio.Lock] = {}
+        self._entry_cooldown: dict[str, float] = {}
+        self.entry_cooldown_sec = float(self.sliders.get("slider_entry_cooldown_sec", 60.0))
+
         self.coin_settings = {
             "XRP": {"leverage": 20, "step": 0.1},
             "SOL": {"leverage": 20, "step": 0.1},
@@ -47,8 +52,42 @@ class TwinOrderExecutor:
     async def execute_twin_entry(
         self, coin: str, trigger_price: float, direction: str = "UP"
     ) -> dict:
-        session = self.client_init.get_rest_session()
         symbol = f"{coin}USDT"
+
+        # --- P3: entry guard ---
+        lock = self._entry_locks.setdefault(symbol, asyncio.Lock())
+        if lock.locked():
+            self.log(f"[GUARD] {coin} entry in-flight - reject")
+            return {
+                "status": "rejected",
+                "coin": coin,
+                "reason": "duplicate_entry_in_flight",
+            }
+
+        now = time.time()
+        cd_until = self._entry_cooldown.get(symbol, 0.0)
+        if now < cd_until:
+            remaining = round(cd_until - now, 1)
+            self.log(f"[GUARD] {coin} cooldown {remaining}s - reject")
+            return {
+                "status": "rejected",
+                "coin": coin,
+                "reason": "cooldown",
+                "cooldown_remaining_sec": remaining,
+            }
+
+        async with lock:
+            result = await self._execute_twin_entry_inner(
+                symbol, coin, trigger_price, direction
+            )
+            if result.get("status") == "OPENED":
+                self._entry_cooldown[symbol] = time.time() + self.entry_cooldown_sec
+            return result
+
+    async def _execute_twin_entry_inner(
+        self, symbol: str, coin: str, trigger_price: float, direction: str = "UP"
+    ) -> dict:
+        session = self.client_init.get_rest_session()
         is_short = direction == "UP"
 
         settings = self.coin_settings.get(coin, {"leverage": 20, "step": 0.01})
@@ -221,6 +260,7 @@ class TwinOrderExecutor:
         except Exception as exc:
             self.log(f"[API ERROR] Critical order failure for {coin}: {exc}")
             return {"status": "FAILED", "coin": coin, "error": str(exc)}
+
 
     # ---------- Exit ----------
 
