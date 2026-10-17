@@ -16,6 +16,7 @@ class TwinOrderExecutor:
         self._entry_locks: dict[str, asyncio.Lock] = {}
         self._entry_cooldown: dict[str, float] = {}
         self.entry_cooldown_sec = float(self.sliders.get("slider_entry_cooldown_sec", 60.0))
+        self._instruments: dict[str, dict] = {}
 
         self.coin_settings = {
             "XRP": {"leverage": 20, "step": 0.1},
@@ -42,6 +43,41 @@ class TwinOrderExecutor:
         rnd = uuid.uuid4().hex[:6]
         link = f"IC-{coin}-{tag}-{ts}-{rnd}"[:36]
         return link
+
+    async def warmup_instruments(self) -> None:
+        """Loads qtyStep/tickSize for all coin_settings from Bybit instruments-info."""
+        session = self.client_init.get_rest_session()
+        for coin in self.coin_settings:
+            symbol = f"{coin}USDT"
+            try:
+                resp = await self._rest(
+                    session.get_instruments_info,
+                    category="linear",
+                    symbol=symbol,
+                )
+                item = resp["result"]["list"][0]
+                qty_step = float(item["lotSizeFilter"]["qtyStep"])
+                tick_size = float(item["priceFilter"]["tickSize"])
+                self._instruments[symbol] = {"qtyStep": qty_step, "tickSize": tick_size}
+                self.log(f"[INSTR] {symbol}: qtyStep={qty_step}, tickSize={tick_size}")
+            except Exception as e:
+                self.log(f"[INSTR WARNING] {symbol}: {e}. Using hardcoded step.")
+
+    def _round_qty(self, symbol: str, qty: float) -> float:
+        info = self._instruments.get(symbol)
+        if info:
+            step = info["qtyStep"]
+            return math.floor(qty / step) * step
+        coin = symbol.replace("USDT", "")
+        step = self.coin_settings.get(coin, {}).get("step", 0.01)
+        return self._round_to_step(qty, step)
+
+    def _round_price(self, symbol: str, price: float) -> float:
+        info = self._instruments.get(symbol)
+        if info:
+            step = info["tickSize"]
+            return round(price / step) * step
+        return round(price, 2)
 
     async def _rest(self, func, *args, **kwargs):
         """Прокси через throttled_call."""
@@ -100,8 +136,8 @@ class TwinOrderExecutor:
         raw_market = total_qty * (self.twin_config["first_entry_market_pct"] / 100.0)
         raw_limit = total_qty * (self.twin_config["second_limit_volume_pct"] / 100.0)
 
-        qty_market = self._round_to_step(raw_market, step)
-        qty_limit = self._round_to_step(raw_limit, step)
+        qty_market = self._round_qty(symbol, raw_market)
+        qty_limit = self._round_qty(symbol, raw_limit)
 
         if qty_market <= 0:
             qty_market = step
@@ -110,15 +146,15 @@ class TwinOrderExecutor:
 
         distance = self.twin_config["second_limit_distance_pct"] / 100.0
         if is_short:
-            ins_price = round(trigger_price * (1.0 + distance), 2)
+            ins_price = self._round_price(symbol, trigger_price * (1.0 + distance))
             entry_side = "Sell"
             exit_side = "Buy"
-            hard_stop = round(ins_price * 1.015, 2)
+            hard_stop = self._round_price(symbol, ins_price * 1.015)
         else:
-            ins_price = round(trigger_price * (1.0 - distance), 2)
+            ins_price = self._round_price(symbol, trigger_price * (1.0 - distance))
             entry_side = "Buy"
             exit_side = "Sell"
-            hard_stop = round(ins_price * 0.985, 2)
+            hard_stop = self._round_price(symbol, ins_price * 0.985)
 
         market_link = self._make_order_link_id(coin, "MKT")
         limit_link = self._make_order_link_id(coin, "LMT")
