@@ -1,25 +1,31 @@
 {
   "api": {
-    "testnet": false,
+    "testnet": true,
     "api_key": "",
     "api_secret": "",
     "recv_window_default": 5000,
     "domain": "bybit"
   },
   "assets": {
-    "monitored_coins": ["BTC", "ETH", "SOL", "XRP"],
+    "monitored_coins": [
+      "BTC",
+      "ETH",
+      "SOL",
+      "XRP"
+    ],
     "quota_per_asset_percent": 25.0
   },
   "sliders": {
-    "slider_1_momentum_threshold_pct": 2.5,
-    "slider_2_panic_window_sec": 15,
+    "slider_1_momentum_threshold_pct": 0.5,
+    "slider_2_panic_window_sec": 30,
     "slider_3_liquidation_volume_threshold_usdt": 20000,
-    "slider_4_rebound_entry_trigger_pct": 0.3,
+    "slider_4_rebound_entry_trigger_pct": 0.15,
     "slider_5_trend_exhaustion_limit_1m_candles": 5,
-    "slider_6_fixed_margin_per_trade_usdt": 1.5,
+    "slider_6_fixed_margin_per_trade_usdt": 1.0,
     "slider_7_leverage_multiplier": 10,
-    "slider_8_trailing_activation_pct": 0.5,
-    "slider_9_instability_rollback_exit_pct": 0.1
+    "slider_8_trailing_activation_pct": 0.6,
+    "slider_9_instability_rollback_exit_pct": 0.3,
+    "slider_entry_cooldown_sec": 30
   },
   "risk_management": {
     "atr_stop_multiplier": 1.5,
