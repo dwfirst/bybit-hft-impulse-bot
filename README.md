@@ -3,6 +3,7 @@
 > Research prototype of a semi-automated HFT terminal for scalping Bybit perpetual futures. Catches the first micro-rebound after a liquidation cascade.
 
 **Status: prototype / work in progress. Not production-ready. No live PnL published.**
+![ImpulseCatcher UI](docs/screenshot.png)
 
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![PyQt6](https://img.shields.io/badge/PyQt6-6.x-41CD52?logo=qt&logoColor=white)](https://pypi.org/project/PyQt6/)
@@ -23,6 +24,13 @@
   - Understand funding, slippage, and exchange rate limits.
 - **No live PnL is published.** All thresholds in this repo are design targets, not measured results.
 
+## AI Assistance Disclosure
+
+This project was developed with the assistance of AI coding tools. All code was reviewed, tested, and validated by the human author, who takes full responsibility for its correctness and behavior.
+
+AI was used as a development aid (code generation, refactoring, documentation), not as an autonomous agent. The architecture, trading logic, risk parameters, and final decisions remain human-authored.
+
+This disclosure is voluntary and provided for transparency. It does not affect the MIT license terms.
 ---
 
 ## 🎯 Concept
