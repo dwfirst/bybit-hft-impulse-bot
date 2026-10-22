@@ -24,14 +24,18 @@
   - Understand funding, slippage, and exchange rate limits.
 - **No live PnL is published.** All thresholds in this repo are design targets, not measured results.
 
-## AI Assistance Disclosure
+## Acknowledgments
 
-This project was developed with the assistance of AI coding tools. All code was reviewed, tested, and validated by the human author, who takes full responsibility for its correctness and behavior.
+This project was built in collaboration with **DeepSeek** (deepseek-chat), 
+which acted as an AI pair-programmer throughout development — from architecture 
+discussions and refactoring to debugging and documentation.
 
-AI was used as a development aid (code generation, refactoring, documentation), not as an autonomous agent. The architecture, trading logic, risk parameters, and final decisions remain human-authored.
+The human author reviewed, tested, and validated every line, and takes full 
+responsibility for the final code. AI was a tool, not an autonomous agent — 
+but a genuinely useful one, and its contribution is gratefully acknowledged.
 
-This disclosure is voluntary and provided for transparency. It does not affect the MIT license terms.
----
+Thanks also to the open-source community behind Bybit V5 API, pybit, PyQt6, 
+qasync, and websockets — without these tools this project would not exist.
 
 ## 🎯 Concept
 
