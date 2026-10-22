@@ -26,13 +26,18 @@
 
 ## Acknowledgments
 
-This project was built in collaboration with **DeepSeek** (deepseek-chat), 
-which acted as an AI pair-programmer throughout development — from architecture 
-discussions and refactoring to debugging and documentation.
+This project was built in collaboration with several AI coding tools across 
+different stages of development:
+
+- **Gemini** — initial prototype and architectural foundation.
+- **Cursor (Composer)** — iterative fixes and refinement of the early codebase.
+- **DeepSeek** (deepseek-chat) — final hardening, refactoring, and documentation 
+  (P3 entry guard, P4 throttled REST, P5 instruments-info, kill switch resilience, 
+  logging, and this README).
 
 The human author reviewed, tested, and validated every line, and takes full 
-responsibility for the final code. AI was a tool, not an autonomous agent — 
-but a genuinely useful one, and its contribution is gratefully acknowledged.
+responsibility for the final code. AI was a tool, not an autonomous agent — but 
+genuinely useful, and its contribution is gratefully acknowledged.
 
 Thanks also to the open-source community behind Bybit V5 API, pybit, PyQt6, 
 qasync, and websockets — without these tools this project would not exist.
