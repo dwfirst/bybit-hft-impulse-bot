@@ -72,6 +72,15 @@ It consumes tick-by-tick `publicTrade` events, detects momentum acceleration, an
 - **Dynamic `recvWindow`** — resolved from `TimeSynchronizer.get_recv_window()` with config fallback.
 - **`orderLinkId` on all orders** — Market / Limit / Close; returned in `order_report` for future reconciliation.
 
+- **Entry guard (P3)** — per-symbol in-flight lock + configurable cooldown (`slider_entry_cooldown_sec`).
+- **Throttled REST proxy (P4)** — all REST calls go through `client_init.throttled_call`, no fallback path.
+- **Instruments-info rounding (P5)** — `warmup_instruments()` fetches `qtyStep`/`tickSize` at startup; fallback to hardcoded step if REST unavailable.
+- **Funding-rate blackout** — 30 s before / 15 s after settlement (commit `49c2efe`).
+- **Periodic position existence check** — `get_positions` every 5 s; detects externally closed positions (commit `c97d8f3`).
+- **Leverage from config** — `slider_7_leverage_multiplier` controls leverage (no more hardcoded 20x).
+- **Kill switch resilience** — `cancel_all_orders_for_safety` and `close_market_position` survive missing API keys.
+- **UI logging** — UI callback mirrors to console and `bot_debug.log`.
+
 ## 🚧 What's NOT implemented yet
 
 - `liquidation` stream subscription — currently only `publicTrade`.
@@ -80,9 +89,6 @@ It consumes tick-by-tick `publicTrade` events, detects momentum acceleration, an
 - ATR-normalized trailing exit — currently percentage-based.
 - True **Chase Limit** re-posting — currently Market scout + static Limit add.
 - Space / Escape hotkeys and a modal popup — `F12` works only when the window has focus.
-- ~~Instruments-info rounding~~ — **DONE**: `warmup_instruments()` fetches `qtyStep`/`tickSize` at startup; fallback to hardcoded step if REST unavailable.
-- ~~Funding-rate blackout~~ — **DONE**: 30 s before / 15 s after settlement (commit `49c2efe`).
-- Periodic position existence check (`get_positions`) — tracker assumes the position is alive until exit.
 
 ---
 
