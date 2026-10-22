@@ -306,7 +306,11 @@ class TwinOrderExecutor:
     # ---------- Exit ----------
 
     async def close_market_position(self, symbol: str, direction: str = "UP") -> bool:
-        session = self.client_init.get_rest_session()
+        try:
+            session = self.client_init.get_rest_session()
+        except Exception as exc:
+            self.log(f"[API ERROR] close_market_position: no REST session: {exc}")
+            return False
         close_link = self._make_order_link_id(symbol.replace("USDT", ""), "CLS")
         try:
             positions = await self._rest(
@@ -358,7 +362,11 @@ class TwinOrderExecutor:
     # ---------- Emergency ----------
 
     async def cancel_all_orders_for_safety(self):
-        session = self.client_init.get_rest_session()
+        try:
+            session = self.client_init.get_rest_session()
+        except Exception as exc:
+            self.log(f"[API ERROR] Kill Switch: no REST session: {exc}")
+            return
         try:
             await self._rest(
                 session.cancel_all_orders,
