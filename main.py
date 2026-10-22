@@ -145,7 +145,14 @@ if __name__ == "__main__":
     config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
     orchestrator = ImpulseCatcherOrchestrator(config_path)
     ui = TradingTerminalUI(orchestrator.config, orchestrator.trigger_kill_switch)
-    orchestrator.set_log_callback(ui.append_log)
+    def _combined_log(text: str):
+        orchestrator._log(text)
+        try:
+            ui.append_log(text)
+        except Exception:
+            pass
+
+    orchestrator.set_log_callback(_combined_log)
     ui.show()
 
     with loop:
