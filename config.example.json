@@ -31,7 +31,8 @@
     "atr_stop_multiplier": 1.5,
     "daily_max_loss_pct": 5.0,
     "max_consecutive_losses": 3,
-    "lockout_duration_hours": 4
+    "lockout_duration_hours": 4,
+    "deposit_usdt": 100.0
   },
   "hft_protections": {
     "api_throttle_ms": 300,
