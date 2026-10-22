@@ -63,8 +63,8 @@ It consumes tick-by-tick `publicTrade` events, detects momentum acceleration, an
 - ATR-normalized trailing exit — currently percentage-based.
 - True **Chase Limit** re-posting — currently Market scout + static Limit add.
 - Space / Escape hotkeys and a modal popup — `F12` works only when the window has focus.
-- Instruments-info rounding — no `instruments-info` fetch; `_round_to_step` is an approximation.
-- Funding-rate blackout (30 s before / 15 s after settlement) — not implemented.
+- ~~Instruments-info rounding~~ — **DONE**: `warmup_instruments()` fetches `qtyStep`/`tickSize` at startup; fallback to hardcoded step if REST unavailable.
+- ~~Funding-rate blackout~~ — **DONE**: 30 s before / 15 s after settlement (commit `49c2efe`).
 - Periodic position existence check (`get_positions`) — tracker assumes the position is alive until exit.
 
 ---
@@ -128,6 +128,7 @@ Copy `config.example.json` to `config.json` and fill in:
 - `risk_management.deposit_usdt` — your actual starting balance in USDT. **Required for daily loss limits to work.**
 - `assets.monitored_coins` — symbols to scan.
 - `sliders.*` — tuning parameters, editable from the UI at runtime.
+- `sliders.slider_entry_cooldown_sec` — per-symbol cooldown after a successful entry (default 60s, P3).
 
 **Never commit `config.json`.** It is listed in `.gitignore`.
 
@@ -194,11 +195,11 @@ On startup the bot:
 - [ ] ATR-based stop and trailing exit
 - [ ] True Chase Limit re-posting
 - [x] API throttle + rate-limit backoff
-- [ ] Instruments-info rounding for Price/Qty
+- [x] Instruments-info rounding for Price/Qty (P5)
 - [ ] Space / Escape hotkeys + modal popup
 - [x] Dynamic `recvWindow` wired into `client_init`
 - [x] RiskGuard state persistence (JSON/SQLite)
-- [ ] Funding-rate blackout window
+- [x] Funding-rate blackout window
 - [ ] 48h Bybit Testnet run
 
 ---
