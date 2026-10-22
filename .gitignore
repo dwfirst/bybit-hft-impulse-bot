@@ -15,3 +15,5 @@ risk_guard_state.json
 # Python
 **/__pycache__/
 *.pyc
+# Local backups
+config.json.bak
