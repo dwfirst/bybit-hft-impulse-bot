@@ -18,11 +18,12 @@ class TwinOrderExecutor:
         self.entry_cooldown_sec = float(self.sliders.get("slider_entry_cooldown_sec", 60.0))
         self._instruments: dict[str, dict] = {}
 
+        _lev = int(self.sliders.get("slider_7_leverage_multiplier", 20))
         self.coin_settings = {
-            "XRP": {"leverage": 20, "step": 0.1},
-            "SOL": {"leverage": 20, "step": 0.1},
-            "ETH": {"leverage": 20, "step": 0.01},
-            "BTC": {"leverage": 20, "step": 0.001},
+            "XRP": {"leverage": _lev, "step": 0.1},
+            "SOL": {"leverage": _lev, "step": 0.1},
+            "ETH": {"leverage": _lev, "step": 0.01},
+            "BTC": {"leverage": _lev, "step": 0.001},
         }
 
     # ---------- Helpers ----------
