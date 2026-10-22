@@ -184,9 +184,17 @@ Edit `config.json` — fill in API keys (testnet), `deposit_usdt`, and symbol li
 
 ### Run
 
-```bash
+**Windows (one-click):**
+~~~
+run_terminal.bat
+~~~
+
+**Any OS (manual):**
+~~~
 python main.py
-```
+~~~
+
+> `run_terminal.bat` is Windows-only. On macOS/Linux, use `python main.py` directly (venv setup: `python3 -m venv hft_env && source hft_env/bin/activate && pip install -r requirements.txt`).
 
 On startup the bot:
 
